@@ -2,21 +2,25 @@ from util.metroUtil import *
 from clients.wmataClient import *
 from util.mathUtil import *
 import time
+import os
+import copy
 
-def main(displayColor):
+def main():
 
     circuitMap = loadCircuitMap()
 
     mainLineDict = getMainLineDict()
-    arrivalPredictionDict = getArrivalPredictions(mainLineDict) 
     stationLocationDict = getStationInfo()
     trainPositionDict = getTrainPositions(mainLineDict, circuitMap)
 
+    allTrainLocationsDict = getEmptyTrainLocationsDict(mainLineDict)
+
+    lineText = ""
     for line in mainLineDict:
         
-        lineArrivalPredictions = arrivalPredictionDict[line]
         lineTrainPositionDict = trainPositionDict[line]
-        locationDict = getLocationDict(mainLineDict[line])
+        locationDict1 = getLocationDict(mainLineDict[line], 1)
+        locationDict2 = getLocationDict(mainLineDict[line], 2)
 
         for train in lineTrainPositionDict:
             stationA, stationB = findClosestStations(lineTrainPositionDict[train], mainLineDict[line], stationLocationDict)
@@ -24,33 +28,62 @@ def main(displayColor):
             distanceFromA = haversine(lineTrainPositionDict[train][0][0], lineTrainPositionDict[train][0][1], stationLocationDict[stationA][0], stationLocationDict[stationA][1])
             distanceFromB = haversine(lineTrainPositionDict[train][0][0], lineTrainPositionDict[train][0][1], stationLocationDict[stationB][0], stationLocationDict[stationB][1])
 
-            
+
             if(lineTrainPositionDict[train][1] == 1):
                 if distanceFromA < 0.06: 
-                    locationDict[stationA].append(train)
+                    index = stationA + "->"
+                    allTrainLocationsDict[index].append(line)
+                    locationDict1[index].append(train)
                 elif distanceFromB < 0.06: 
-                    locationDict[stationB].append(train)
+                    index = stationB + "->"
+                    allTrainLocationsDict[index].append(line)
+                    locationDict1[index].append(train)
                 else:
                     middleLoc = stationA + "->" + stationB
-                    locationDict[middleLoc].append(train)
-        
+                    allTrainLocationsDict[middleLoc].append(line)
+                    locationDict1[middleLoc].append(train)
 
-        if line == displayColor:
-            line = ""
-            for loc in locationDict:
-
-                if len(locationDict[loc]) == 0:
-                    line = line + f'{"-": ^4}' + "|"
+            if(lineTrainPositionDict[train][1] == 2):
+                if distanceFromA < 0.06: 
+                    index = stationA + "<-"
+                    allTrainLocationsDict[index].append(line)
+                    locationDict2[index].append(train)
+                elif distanceFromB < 0.06:
+                    index = stationB + "<-" 
+                    allTrainLocationsDict[index].append(line)
+                    locationDict2[index].append(train)
                 else:
-                    for train in locationDict[loc]:
-                        line = line + f'{train: ^4}' + "|"
+                    middleLoc = stationA + "<-" + stationB
+                    allTrainLocationsDict[middleLoc].append(line)
+                    locationDict2[middleLoc].append(train)
 
-            print(line)
+        for loc in locationDict2:
 
-displayColor = "GR"
+            if len(locationDict2[loc]) == 0:
+                lineText = lineText + f'{"-": ^4}' + "|"
+            else:
+                for train in locationDict2[loc]:
+                    lineText = lineText + f'{train: ^4}' + "|"
+        
+        lineText =  lineText + '\n' + getHeaders(line, 2) + '\n'
+        lineText = lineText + getHeaders(line, 1) + '\n'
+        
+        for loc in locationDict1:
 
-printHeaders(displayColor)
+            if len(locationDict1[loc]) == 0:
+                lineText = lineText + f'{"-": ^4}' + "|"
+            else:
+                for train in locationDict1[loc]:
+                    lineText = lineText + f'{train: ^4}' + "|"
 
-while True:
-    main(displayColor)
+        print(lineText + "\n")
+        lineText = ""
+    
+
+            
+# Start the label updates
+while True: 
+    main()
     time.sleep(3)
+    os.system('cls' if os.name == 'nt' else 'clear')
+

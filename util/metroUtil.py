@@ -1,5 +1,6 @@
 import json
 from re import L
+import stat
 
 def loadCircuitMap():
     
@@ -14,19 +15,21 @@ def loadCircuitMap():
 
     return circuitIdMap
 
-def printHeaders(color):
+def getHeaders(color, dir):
 
     mld = getMainLineDict()
-    ld = getLocationDict(mld[color])
+    ld = getLocationDict(mld[color], dir)
     header = ""
     for loc in ld:
         if len(loc) == 3:
             header = header + f'{loc: ^4}' + "|"
         else:
-            header = header + f'{"-->": ^4}' + "|" 
+            if dir == 1:
+                header = header + f'{"-->": ^4}' + "|" 
+            else:
+                header = header + f'{"<--": ^4}' + "|" 
 
-    print(header)
-    return 
+    return header
 
 def getMainLineDict():
 
@@ -53,18 +56,57 @@ def getMainLineDict():
     return mainLineDict
 
 #returns a dict of all possible line locations (leds) with a value of an empty list for populating with trains
-def getLocationDict(lineList):
+def getLocationDict(lineList, dir):
     
     locationDict = {}
     
     for i in range(0, len(lineList)):
         if i > len(lineList) - 1:
             break
-        locationDict[lineList[i]] = []
+        if dir == 1: 
+            station = lineList[i] + "->"
+            locationDict[station] = []
+        else:
+            station = lineList[i] + "<-"
+            locationDict[station] = []
         if i < len(lineList)-1:
-            middleLoc = str(lineList[i]) + "->" + str(lineList[i+1])
-            locationDict[middleLoc] = []
-
+            if dir == 1:
+                middleLoc = str(lineList[i]) + "->" + str(lineList[i+1])
+                locationDict[middleLoc] = []
+            else: 
+                middleLoc = str(lineList[i]) + "<-" + str(lineList[i+1])
+                locationDict[middleLoc] = []
     return locationDict
+
+
+
+def getEmptyTrainLocationsDict(mainLineDict):
+
+    emptyTrainDict = {}
+
+
+    for line in mainLineDict:
+        previous_station = ""
+        for station in mainLineDict[line]:
+            
+            station_east = station + "->"
+            station_west = station + "<-"
+            station_between_east = previous_station + "->" + station
+            station_between_west = previous_station + "<-" + station
+
+            if station_east not in emptyTrainDict:
+                emptyTrainDict[station_east] = []
+            if station_west not in emptyTrainDict:
+                emptyTrainDict[station_west] = []
+
+            if station_between_east not in emptyTrainDict and previous_station != "":
+                emptyTrainDict[station_between_east] = []
+            if station_between_west not in emptyTrainDict and previous_station != "":
+                emptyTrainDict[station_between_west] = []
+
+            previous_station = station
+        
+       
+    return emptyTrainDict
 
 
