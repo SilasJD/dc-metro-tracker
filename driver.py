@@ -3,9 +3,9 @@ from clients.wmataClient import *
 from util.mathUtil import *
 import time
 import os
-import copy
+from filelock import FileLock
 
-def main():
+def getTrainList():
 
     circuitMap = loadCircuitMap()
 
@@ -76,14 +76,36 @@ def main():
                 for train in locationDict1[loc]:
                     lineText = lineText + f'{train: ^4}' + "|"
 
-        print(lineText + "\n")
+        
         lineText = ""
+
+    return allTrainLocationsDict
     
 
             
 # Start the label updates
+count = 0
 while True: 
-    main()
+    trainList = getTrainList()
+    with FileLock("trainLocations.lock"):
+        with open("trainLocations.txt", 'w') as f:  
+            for key, value in trainList.items(): 
+                trainstr = "" 
+                if len(value) == 1:
+                    trainstr = value[0]
+                elif len(value) > 1:
+                    for train in value:
+                        if trainstr == "":
+                            trainstr = trainstr + train
+                        elif trainstr != "" and train not in trainstr:
+                            trainstr = trainstr + "," + train
+                
+                f.write('%s\n' % (key))
+                f.write('%s\n' % (trainstr))
+
+
+    print("sending file " + str(count) + "...")
+    count += 1
     time.sleep(3)
-    os.system('cls' if os.name == 'nt' else 'clear')
+    # os.system('cls' if os.name == 'nt' else 'clear')
 

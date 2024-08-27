@@ -21,7 +21,7 @@ def getHeaders(color, dir):
     ld = getLocationDict(mld[color], dir)
     header = ""
     for loc in ld:
-        if len(loc) == 3:
+        if len(loc) == 5:
             header = header + f'{loc: ^4}' + "|"
         else:
             if dir == 1:
