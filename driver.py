@@ -1,15 +1,22 @@
+from json.tool import main
 from util.metroUtil import *
 from clients.wmataClient import *
 from util.mathUtil import *
 import time
 import os
 from filelock import FileLock
+import serial
+import time
+
+# ser = serial.Serial('COM3', 9600, timeout=1)  # Change COM port accordingly
+
 
 def getTrainList():
 
     circuitMap = loadCircuitMap()
 
     mainLineDict = getMainLineDict()
+    stationsInOrder = getKeys(mainLineDict)
     stationLocationDict = getStationInfo()
     trainPositionDict = getTrainPositions(mainLineDict, circuitMap)
 
@@ -87,8 +94,21 @@ def getTrainList():
 count = 0
 while True: 
     trainList = getTrainList()
+    serialString = ""
     with FileLock("trainLocations.lock"):
         with open("trainLocations.txt", 'w') as f:  
+            
+            
+            keys = getKeys(getMainLineDict())
+            for i in range(len(keys)):
+                trains = trainList[keys[i]]
+                if len(trains) > 0:
+                    serialString = serialString + trains[0] + " | "
+                else: 
+                    serialString = serialString + " | "
+
+            serialString = serialString + "\n"
+
             for key, value in trainList.items(): 
                 trainstr = "" 
                 if len(value) == 1:
@@ -103,8 +123,19 @@ while True:
                 f.write('%s\n' % (key))
                 f.write('%s\n' % (trainstr))
 
+        for i in range(12):
+            outputstr = ""
+            for j in range(16):
+                idx = (16*i)+j
+                if len(trainList[keys[idx]]) > 0:
+                    outputstr = outputstr + trainList[keys[idx]][0] + " | "
+                else: 
+                    outputstr = outputstr + "   | "
+            print(outputstr)
 
-    print("sending file " + str(count) + "...")
+    print("\n\n\n\n\n\n")
+
+    # ser.write((str(serialString).encode()))
     count += 1
     time.sleep(3)
     # os.system('cls' if os.name == 'nt' else 'clear')

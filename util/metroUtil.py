@@ -31,6 +31,23 @@ def getHeaders(color, dir):
 
     return header
 
+def getKeys(mainLineDict):
+
+    stationsInOrder = []
+    for line, stations in mainLineDict.items():
+        for i in range(8): 
+            if i != len(stations):
+                stationsInOrder.append(stations[i] + "->")
+            if i+1 != len(stations):
+                stationsInOrder.append(stations[i] + "->" + stations[i+1])
+        for i in range(8):
+                stationsInOrder.append(stations[i] + "<-")
+                stationsInOrder.append(stations[i] + "<-" + stations[i+1])
+
+    return stationsInOrder
+
+    
+
 def getMainLineDict():
 
     mainLineDict = {}
